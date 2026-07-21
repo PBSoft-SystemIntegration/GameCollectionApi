@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using GameCollectionApi.DTO;
+﻿using GameCollectionApi.DTO;
 using GameCollectionApi.Models;
+using GameCollectionApi.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GameCollectionApi.Controllers
 {
@@ -8,11 +9,12 @@ namespace GameCollectionApi.Controllers
     [Route("api/[controller]")]
     public class GamesController : ControllerBase
     {
-        private static readonly Dictionary<int, Game> Games = new()
+
+        private readonly IGameService _gameService;
+        public GamesController(IGameService gameService)
         {
-            [0] = new() { Title = "Tomb Raider", Genre = "Action", ReleaseYear = 1996 },
-            [1] = new() { Title = "Elden Ring", Genre = "RPG", ReleaseYear = 2022 }
-        };
+            _gameService = gameService;
+        }
 
         [HttpGet]
         [EndpointSummary("Get all games")]
@@ -20,13 +22,12 @@ namespace GameCollectionApi.Controllers
         [ProducesResponseType<IReadOnlyCollection<GameResponse>>(StatusCodes.Status200OK)]
         public IActionResult GetAll()
         {
-            var response = Games
-             .Select(entry => new GameResponse(
-               entry.Key,
-               entry.Value.Title,
-               entry.Value.Genre,
-               entry.Value.ReleaseYear))
-             .ToList();
+            var games = _gameService.GetAll();
+
+            var response = games
+                .Select(ToResponse)
+                .ToList();
+
             return Ok(response);
         }
 
@@ -37,9 +38,10 @@ namespace GameCollectionApi.Controllers
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public IActionResult GetById(int id)
         {
-            return Games.TryGetValue(id, out var game)
-                ? Ok(ToResponse(id, game))
-                : NotFound();
+            var game = _gameService.GetById(id);
+            return game == null
+                ? NotFound()
+                : Ok(ToResponse(game));
         }
 
         [HttpPost]
@@ -49,7 +51,6 @@ namespace GameCollectionApi.Controllers
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         public IActionResult Create(CreateGameRequest request)
         {
-            var id = Games.Count == 0 ? 0 : Games.Keys.Max() + 1;
             var game = new Game
             {
                 Title = request.Title,
@@ -57,9 +58,9 @@ namespace GameCollectionApi.Controllers
                 ReleaseYear = request.ReleaseYear
             };
 
-            Games[id] = game;
-            var response = ToResponse(id, game);
-            return CreatedAtRoute(nameof(GetById), new { id }, response);
+            var createdGame = _gameService.Create(game);
+            var response = ToResponse(createdGame);
+            return CreatedAtRoute(nameof(GetById), new { id = createdGame.Id }, response);
         }
 
         [HttpPut("{id:int}")]
@@ -70,19 +71,14 @@ namespace GameCollectionApi.Controllers
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public IActionResult Replace(int id, UpdateGameRequest request)
         {
-            if (!Games.ContainsKey(id))
-            {
-                return NotFound();
-            }
-
-            Games[id] = new Game
+            var game = new Game
             {
                 Title = request.Title,
                 Genre = request.Genre,
                 ReleaseYear = request.ReleaseYear
             };
 
-            return NoContent();
+            return _gameService.Replace(id, game) ? NoContent() : NotFound();
         }
 
         [HttpPatch("{id:int}")]
@@ -93,21 +89,19 @@ namespace GameCollectionApi.Controllers
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public IActionResult UpdatePartially(int id, PatchGameRequest request)
         {
-            if (!Games.TryGetValue(id, out var game))
-            {
-                return NotFound();
-            }
-
             if (request.Title is null && request.Genre is null && request.ReleaseYear is null)
             {
                 ModelState.AddModelError(nameof(request), "At least one field must be supplied.");
                 return ValidationProblem(ModelState);
             }
 
-            game.Title = request.Title ?? game.Title;
-            game.Genre = request.Genre ?? game.Genre;
-            game.ReleaseYear = request.ReleaseYear ?? game.ReleaseYear;
-            return NoContent();
+            return _gameService.UpdatePartially(
+                id,
+                request.Title,
+                request.Genre,
+                request.ReleaseYear)
+                ? NoContent()
+                : NotFound();
         }
 
         [HttpDelete("{id:int}")]
@@ -117,10 +111,10 @@ namespace GameCollectionApi.Controllers
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public IActionResult Delete(int id)
         {
-            return Games.Remove(id) ? NoContent() : NotFound();
+            return _gameService.Delete(id) ? NoContent() : NotFound();
         }
 
-        private static GameResponse ToResponse(int id, Game game) =>
-            new(id, game.Title, game.Genre, game.ReleaseYear);
+        private static GameResponse ToResponse(Game game) =>
+           new(game.Id, game.Title, game.Genre, game.ReleaseYear);
     }
 }
