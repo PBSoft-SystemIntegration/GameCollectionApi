@@ -1,0 +1,7 @@
+@SIRest_HostAddress = https://localhost:7176
+
+GET {{SIRest_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
