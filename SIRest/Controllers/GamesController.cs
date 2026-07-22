@@ -20,9 +20,9 @@ namespace GameCollectionApi.Controllers
         [EndpointSummary("Get all games")]
         [EndpointDescription("Returns every game in the collection.")]
         [ProducesResponseType<IReadOnlyCollection<GameResponse>>(StatusCodes.Status200OK)]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var games = _gameService.GetAll();
+            var games = await _gameService.GetAllAsync();
 
             var response = games
                 .Select(ToResponse)
@@ -36,9 +36,9 @@ namespace GameCollectionApi.Controllers
         [EndpointDescription("Returns one game when the id exists.")]
         [ProducesResponseType<GameResponse>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public IActionResult GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            var game = _gameService.GetById(id);
+            var game = await _gameService.GetByIdAsync(id);
             return game == null
                 ? NotFound()
                 : Ok(ToResponse(game));
@@ -49,7 +49,7 @@ namespace GameCollectionApi.Controllers
         [EndpointDescription("Adds a game and returns the created resource with its location.")]
         [ProducesResponseType<GameResponse>(StatusCodes.Status201Created)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-        public IActionResult Create(CreateGameRequest request)
+        public async Task<IActionResult> Create(CreateGameRequest request)
         {
             var game = new Game
             {
@@ -58,7 +58,7 @@ namespace GameCollectionApi.Controllers
                 ReleaseYear = request.ReleaseYear
             };
 
-            var createdGame = _gameService.Create(game);
+            var createdGame = await _gameService.CreateAsync(game);
             var response = ToResponse(createdGame);
             return CreatedAtRoute(nameof(GetById), new { id = createdGame.Id }, response);
         }
@@ -69,7 +69,7 @@ namespace GameCollectionApi.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public IActionResult Replace(int id, UpdateGameRequest request)
+        public async Task<IActionResult> Replace(int id, UpdateGameRequest request)
         {
             var game = new Game
             {
@@ -78,7 +78,9 @@ namespace GameCollectionApi.Controllers
                 ReleaseYear = request.ReleaseYear
             };
 
-            return _gameService.Replace(id, game) ? NoContent() : NotFound();
+            return await _gameService.ReplaceAsync(id, game)
+                ? NoContent()
+                : NotFound();
         }
 
         [HttpPatch("{id:int}")]
@@ -87,7 +89,7 @@ namespace GameCollectionApi.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public IActionResult UpdatePartially(int id, PatchGameRequest request)
+        public async Task<IActionResult> UpdatePartially(int id, PatchGameRequest request)
         {
             if (request.Title is null && request.Genre is null && request.ReleaseYear is null)
             {
@@ -95,7 +97,7 @@ namespace GameCollectionApi.Controllers
                 return ValidationProblem(ModelState);
             }
 
-            return _gameService.UpdatePartially(
+            return await _gameService.UpdatePartiallyAsync(
                 id,
                 request.Title,
                 request.Genre,
@@ -109,9 +111,11 @@ namespace GameCollectionApi.Controllers
         [EndpointDescription("Removes a game from the collection.")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            return _gameService.Delete(id) ? NoContent() : NotFound();
+            return await _gameService.DeleteAsync(id)
+                ? NoContent()
+                : NotFound();
         }
 
         private static GameResponse ToResponse(Game game) =>

@@ -1,14 +1,17 @@
-﻿using GameCollectionApi.Models;
+using GameCollectionApi.Models;
 
-namespace GameCollectionApi.Services
+namespace GameCollectionApi.Services;
+
+public interface IGameService
 {
-    public interface IGameService
-    {
-        IReadOnlyCollection<Game> GetAll();
-        Game? GetById(int id);
-        Game Create(Game game);
-        bool Replace(int id, Game game);
-        bool UpdatePartially(int id, string? title, string? genre, ushort? releaseYear);
-        bool Delete(int id);
-    }
+    Task<IReadOnlyCollection<Game>> GetAllAsync();
+    Task<Game?> GetByIdAsync(int id);
+    Task<Game> CreateAsync(Game game);
+    Task<bool> ReplaceAsync(int id, Game game);
+    Task<bool> UpdatePartiallyAsync(
+        int id,
+        string? title,
+        string? genre,
+        ushort? releaseYear);
+    Task<bool> DeleteAsync(int id);
 }

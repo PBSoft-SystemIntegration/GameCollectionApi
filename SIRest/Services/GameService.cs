@@ -1,66 +1,51 @@
-﻿using GameCollectionApi.Models;
+using GameCollectionApi.Models;
+using GameCollectionApi.Repositories;
 
-namespace GameCollectionApi.Services
+namespace GameCollectionApi.Services;
+
+public sealed class GameService(IGameRepository gameRepository) : IGameService
 {
-    public class GameService : IGameService
+    public Task<IReadOnlyCollection<Game>> GetAllAsync()
     {
-        private static readonly Dictionary<int, Game> Games = new()
-        {
-            [0] = new() { Id = 0, Title = "Tomb Raider", Genre = "Action", ReleaseYear = 1996 },
-            [1] = new() { Id = 1, Title = "Elden Ring", Genre = "RPG", ReleaseYear = 2022 }
-        };
+        return gameRepository.GetAllAsync();
+    }
 
-        public IReadOnlyCollection<Game> GetAll()
+    public Task<Game?> GetByIdAsync(int id)
+    {
+        return gameRepository.GetByIdAsync(id);
+    }
+
+    public Task<Game> CreateAsync(Game game)
+    {
+        return gameRepository.CreateAsync(game);
+    }
+
+    public Task<bool> ReplaceAsync(int id, Game game)
+    {
+        game.Id = id;
+        return gameRepository.UpdateAsync(game);
+    }
+
+    public async Task<bool> UpdatePartiallyAsync(
+        int id,
+        string? title,
+        string? genre,
+        ushort? releaseYear)
+    {
+        var game = await gameRepository.GetByIdAsync(id);
+        if (game is null)
         {
-            return Games.Values.ToList();
+            return false;
         }
 
-        public Game? GetById(int id)
-        {
-            return Games.GetValueOrDefault(id);
-        }
+        game.Title = title ?? game.Title;
+        game.Genre = genre ?? game.Genre;
+        game.ReleaseYear = releaseYear ?? game.ReleaseYear;
+        return await gameRepository.UpdateAsync(game);
+    }
 
-        public Game Create(Game game)
-        {
-            var id = Games.Count == 0 ? 0 : Games.Keys.Max() + 1;
-            game.Id = id;
-            Games[id] = game;
-            return game;
-        }
-
-        public bool Replace(int id, Game game)
-        {
-            if (!Games.ContainsKey(id))
-            {
-                return false;
-            }
-
-            game.Id = id;
-            Games[id] = game;
-            return true;
-        }
-
-        public bool UpdatePartially(
-            int id,
-            string? title,
-            string? genre,
-            ushort? releaseYear)
-        {
-            if (!Games.TryGetValue(id, out var game))
-            {
-                return false;
-            }
-
-            game.Title = title ?? game.Title;
-            game.Genre = genre ?? game.Genre;
-            game.ReleaseYear = releaseYear ?? game.ReleaseYear;
-            return true;
-        }
-
-        public bool Delete(int id)
-        {
-            return Games.Remove(id);
-        }
+    public Task<bool> DeleteAsync(int id)
+    {
+        return gameRepository.DeleteAsync(id);
     }
 }
-
