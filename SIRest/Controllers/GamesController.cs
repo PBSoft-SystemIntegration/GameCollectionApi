@@ -1,4 +1,5 @@
-﻿using GameCollectionApi.DTO;
+﻿using GameCollectionApi.Attributes;
+using GameCollectionApi.DTO;
 using GameCollectionApi.Models;
 using GameCollectionApi.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +16,7 @@ namespace GameCollectionApi.Controllers
         {
             _gameService = gameService;
         }
-
+        [ApiKey]
         [HttpGet]
         [EndpointSummary("Get all games")]
         [EndpointDescription("Returns every game in the collection.")]
