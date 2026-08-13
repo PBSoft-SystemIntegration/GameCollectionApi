@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Local SQLite database and transient sidecar files
+/SIRest/games.db
+/SIRest/games.db-shm
+/SIRest/games.db-wal

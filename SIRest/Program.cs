@@ -23,11 +23,13 @@ switch (repositoryProvider.ToLowerInvariant())
         builder.Services.AddDbContext<GameDbContext>(options =>
             options.UseSqlite(builder.Configuration.GetConnectionString("Sqlite")));
         builder.Services.AddScoped<IGameRepository, EfGameRepository>();
+        builder.Services.AddScoped<IApiClientRepository, EfApiClientRepository>();
         break;
     case "postgres":
         builder.Services.AddDbContext<GameDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
         builder.Services.AddScoped<IGameRepository, EfGameRepository>();
+        builder.Services.AddScoped<IApiClientRepository, EfApiClientRepository>();
         break;
     default:
         throw new InvalidOperationException(
