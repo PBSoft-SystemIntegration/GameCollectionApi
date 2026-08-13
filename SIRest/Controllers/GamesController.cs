@@ -2,6 +2,7 @@
 using GameCollectionApi.DTO;
 using GameCollectionApi.Models;
 using GameCollectionApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GameCollectionApi.Controllers
@@ -46,6 +47,7 @@ namespace GameCollectionApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,User")]
         [EndpointSummary("Create a game")]
         [EndpointDescription("Adds a game and returns the created resource with its location.")]
         [ProducesResponseType<GameResponse>(StatusCodes.Status201Created)]
@@ -108,6 +110,7 @@ namespace GameCollectionApi.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
         [EndpointSummary("Delete a game")]
         [EndpointDescription("Removes a game from the collection.")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
