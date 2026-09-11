@@ -21,16 +21,32 @@ Data nulstilles ved genstart. Den lokale appsettings-fil er uændret.
 
 PostgreSQL med et vedvarende volume:
 
+Start databasen først:
+
 ```powershell
-docker compose up --build -d
-docker compose down
+docker compose up -d db
+docker compose logs -f db
 ```
 
-Compose bruger Host=db, starter først API'et efter databasen er klar og eksponerer kun API'et.
+Vent, til den afsluttende opstart skriver `database system is ready to accept connections`.
+Ved første opstart initialiserer PostgreSQL først databasen med en midlertidig server;
+vent til initialiseringen og den efterfølgende genstart er færdig.
+Tryk Ctrl+C for at afslutte logvisningen. Databasen fortsætter med at køre.
+Start derefter API'et:
+
+```powershell
+docker compose up --build -d api
+```
+
+Stop begge containere med `docker compose down`.
+
+Compose bruger Host=db og eksponerer kun API'et. `depends_on` styrer rækkefølgen,
+men venter ikke på, at PostgreSQL kan modtage forbindelser.
+Hvis API'et blev startet for tidligt, kan det startes igen med `docker compose restart api`, når databasen er klar.
 Databasen opretter sit skema gennem den eksisterende EnsureCreatedAsync ved API-opstart.
 API_PORT kan ændre værtsporten, og POSTGRES_PASSWORD kan erstatte det lokale undervisningspassword.
 Compose opretter et navngivet volume. Brug ikke samme databasevolume til forskellige branches med forskellige skemaer.
-Start eksempelvis med `docker compose -p gamecollection-api-key up --build -d` og vælg et særskilt projektnavn pr. branch.
+Vælg eventuelt et særskilt projektnavn pr. branch med `-p`, fx `docker compose -p gamecollection-api-key up -d db`. Brug samme `-p` i alle efterfølgende kommandoer for den branch.
 
 SQLite med et vedvarende volume:
 
