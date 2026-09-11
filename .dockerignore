@@ -1,0 +1,13 @@
+**/bin
+**/obj
+**/.vs
+**/.git
+**/.agents
+**/.codex
+**/.codex-worktrees
+**/*.user
+**/*.suo
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/.env
