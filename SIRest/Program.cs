@@ -102,7 +102,7 @@ if (!repositoryProvider.Equals("InMemory", StringComparison.OrdinalIgnoreCase))
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("ApiDocumentation:Enabled"))
 {
     app.MapOpenApi();
     app.MapScalarApiReference(options =>
@@ -111,7 +111,10 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+if (!app.Configuration.GetValue<bool>("DOTNET_RUNNING_IN_CONTAINER"))
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 
